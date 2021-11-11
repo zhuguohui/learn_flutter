@@ -1,13 +1,11 @@
-import 'dart:ffi';
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:learn_flutter/view/bar_map_data_bean.dart';
-import 'dart:convert';
-
-import 'package:learn_flutter/view/color_util.dart';
 
 class BarMapView extends StatefulWidget {
   String path;
@@ -45,38 +43,40 @@ class _BarMapViewState extends State<BarMapView> {
     CustomMapView customMapView = CustomMapView(
         _barMapDataBean, scale, _left, _top,
         key: const ValueKey(1));
-    return Container(
-      width: 300,
-      height: 300,
-      margin: const EdgeInsets.all(30),
-      child: ClipRect(
-        child: GestureDetector(
-            child: customMapView,
-            onTap: () {
-              setState(() {
-                customMapView.onTap();
-              });
-            },
-            onScaleStart: (d) {
-              _lastOffset = d.focalPoint;
-              _lastScale = 1.0;
-            },
-            onScaleUpdate: (ScaleUpdateDetails details) {
-              setState(() {
-                var d = details;
-                _left += (d.focalPoint.dx - _lastOffset.dx);
-                _top += (d.focalPoint.dy - _lastOffset.dy);
-                if (details.scale != 1.0) {
-                  var change = details.scale - _lastScale;
-                  scale += change;
-                  _lastScale = details.scale;
-                }
+    return Center(
+      child: SizedBox(
+        width: 300,
+        height: 300,
+        child: ClipRect(
+          child: GestureDetector(
+              child: customMapView,
+              onTap: () {
+                setState(() {
+                  customMapView.onTap();
+                });
+              },
+              onScaleStart: (d) {
                 _lastOffset = d.focalPoint;
-              });
-            }),
+                _lastScale = 1.0;
+              },
+              onScaleUpdate: (ScaleUpdateDetails details) {
+                setState(() {
+                  var d = details;
+                  _left += (d.focalPoint.dx - _lastOffset.dx);
+                  _top += (d.focalPoint.dy - _lastOffset.dy);
+                  if (details.scale != 1.0) {
+                    var change = details.scale - _lastScale;
+                    scale += change;
+                    _lastScale = details.scale;
+                  }
+                  _lastOffset = d.focalPoint;
+                });
+              }),
+        ),
       ),
     );
   }
+
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
@@ -202,7 +202,7 @@ class RenderCustomMapView extends RenderBox {
     matrix4.scale(scale, scale);
     //生成invertMatrix 用于将点击事件中的坐标转换为变换前的坐标
     invertMatrix = Matrix4.inverted(matrix4);
-    invertMatrix.translate(0.toDouble(), offset.dy);
+    invertMatrix.translate(offset.dx, offset.dy);
     canvas.transform(matrix4.storage);
     drawLines(canvas, Offset.zero);
 
@@ -237,12 +237,11 @@ class RenderCustomMapView extends RenderBox {
     var before = invertMatrix
         .applyToVector3Array([lastPosition!.dx, lastPosition!.dy, 0]);
     Offset originalOffset = Offset(before[0], before[1]);
-    pathList.forEach((path) {
-      if (path.contains(originalOffset)) {}
-    });
+    print('originalOffset=$originalOffset');
+
     _barMapDataBean!.barMaps.forEach((map) {
       if (map.path!.contains(originalOffset)) {
-        print('点击了${map.name}');
+        Fluttertoast.showToast(msg: '点击${map.name}', gravity: ToastGravity.TOP);
       }
     });
   }
