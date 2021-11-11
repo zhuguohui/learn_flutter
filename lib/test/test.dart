@@ -1,3 +1,6 @@
+import 'dart:math';
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -41,7 +44,6 @@ class GestureTest extends StatefulWidget {
 }
 
 
-
 class _GestureTestState extends State<GestureTest> {
   String _operation = "No Gesture detected!"; //保存事件名
   @override
@@ -81,7 +83,7 @@ class Drag extends StatefulWidget {
 
 class _DragState extends State<Drag> with SingleTickerProviderStateMixin {
   double _top = 0.0; //距顶部的偏移
-  double _left = 0.0;//距左边的偏移
+  double _left = 0.0; //距左边的偏移
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +107,7 @@ class _DragState extends State<Drag> with SingleTickerProviderStateMixin {
                 _top += e.delta.dy;
               });
             },
-            onPanEnd: (DragEndDetails e){
+            onPanEnd: (DragEndDetails e) {
               //打印滑动结束时在x、y轴上的速度
               print(e.velocity);
             },
@@ -125,23 +127,85 @@ class Scale extends StatefulWidget {
 }
 
 class _ScaleState extends State<Scale> {
-  double _width = 200.0; //通过修改图片宽度来达到缩放效果
+  double _width = 400.0; //通过修改图片宽度来达到缩放效果
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: GestureDetector(
-        //指定宽度，高度自适应
-        child: Image.asset("./image/log/girl.jpg", width: _width),
-        onScaleUpdate: (ScaleUpdateDetails details) {
-          setState(() {
-            //缩放倍数在0.8到10倍之间
-            _width=200*details.scale.clamp(.8, 10.0);
-          });
-        },
-      ),
+    return WaterMark(
+      title: "西藏网信办",
+      child: Center(child: Image.asset("./image/log/girl.jpg", width: _width)
+      )
     );
   }
+
+
 }
+
+class WaterMark extends StatelessWidget {
+  Widget child;
+  String title;
+
+  WaterMark({Key? key, required  this.child, required  this.title})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      foregroundPainter: _MyPaint(title),
+      child: child,
+    );
+  }
+
+}
+
+class _MyPaint extends CustomPainter{
+  String title;
+  _MyPaint(this.title);
+
+  var mPaint = Paint() //创建一个画笔并配置其属性
+    ..isAntiAlias = true //是否抗锯齿
+    ..style = PaintingStyle.fill //画笔样式：填充
+    ..color=Colors.red;//画笔颜色
+  var textStyle=const TextStyle(color:Colors.red,fontSize: 20);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // TODO: implement paint
+    var rect = Offset.zero & size;
+
+    var builder= ParagraphBuilder(textStyle.getParagraphStyle(
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.start,
+      textScaleFactor: 1.0,
+    ));
+
+    builder
+        ..pushStyle(textStyle.getTextStyle())
+        ..addText(title);
+    var paragraph= builder.build()..layout(const ParagraphConstraints(width: double.infinity));;
+    //绘制文本
+    var cx= rect.center.dx;
+    var cy=rect.center.dy;
+    canvas.translate(rect.center.dx,rect.center.dy);
+    canvas.rotate(0.25*pi);
+    canvas.translate(-rect.center.dx, -rect.center.dy);
+    canvas.drawParagraph(paragraph,Offset(cx-40,cy-150));
+    canvas.drawParagraph(paragraph,Offset(cx-20,cy-100));
+    canvas.drawParagraph(paragraph,Offset(cx,cy-200));
+    canvas.drawParagraph(paragraph,Offset(cx+40,cy));
+    canvas.drawParagraph(paragraph,Offset(cx+80,cy+40));
+    canvas.drawParagraph(paragraph,Offset(cx-100,cy));
+    canvas.drawParagraph(paragraph,Offset(cx-100,cy+50));
+    // canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    // TODO: implement shouldRepaint
+    // throw UnimplementedError();
+    return false;
+  }}
+
+
 
 
